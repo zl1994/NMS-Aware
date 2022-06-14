@@ -10,13 +10,13 @@ Codes for "Bridging the gap between one-to-many and one-to-one label assignment 
 # and you have activated your virtual environment if needed.
 # and with COCO dataset in 'data/coco/'.
 
-./tools/dist_train.sh configs/NMS-aware/fcos_r50_fpn_o2m_o2o_2GCN_1x.py 2
+bash ./tools/dist_train.sh configs/NMS-aware/fcos_r50_fpn_o2m_o2o_2GCN_1x.py 2
 ```
 
 ## Inference
 
 ```python
-./tools/dist_test.sh configs/NMS-aware/fcos_r50_fpn_o2m_o2o_2GCN_1x.py work_dirs/fcos_r50_fpn_o2m_o2o_2GCN_1x/epoch_12.pth 4 --eval bbox
+bash ./tools/dist_test.sh configs/NMS-aware/fcos_r50_fpn_o2m_o2o_2GCN_1x.py work_dirs/fcos_r50_fpn_o2m_o2o_2GCN_1x/epoch_12.pth 4 --eval bbox
 ```
 
 ## Models

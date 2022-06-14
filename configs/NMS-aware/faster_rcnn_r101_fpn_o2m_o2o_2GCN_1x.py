@@ -1,11 +1,7 @@
-_base_ = [
-    '../_base_/models/faster_rcnn_r50_fpn.py',
-    '../_base_/datasets/coco_detection.py',
-    '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
-]
+_base_ = '../faster_rcnn/faster_rcnn_r50_caffe_fpn_1x_coco.py'
 
 model = dict(
-    pretrained='torchvision://resnet101_caffe', 
+    pretrained='open-mmlab://detectron2/resnet101_caffe',
     backbone=dict(depth=101),
     roi_head=dict(
         bbox_head=dict(

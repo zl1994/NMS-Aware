@@ -21,7 +21,7 @@ bash ./tools/dist_test.sh configs/NMS-aware/fcos_r50_fpn_o2m_o2o_2GCN_1x.py work
 
 ## Models
 
-We provide the following trained models. All models are trained with 16 images in a mini-batch.
+We provide the following trained models. All models are trained with 16 images in a mini-batch. It's normal to observe ~0.2AP noise in all methods.
 
 Model | MS train | Lr schd | mAP| Config | Download
 ---|:---:|:---:|:---:|:---:|:---:

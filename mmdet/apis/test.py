@@ -22,158 +22,49 @@ def single_gpu_test(model,
     results = []
     dataset = data_loader.dataset
     prog_bar = mmcv.ProgressBar(len(dataset))
-    gt_list = []
-    pred_list = []
-    imp_iou_list = []
-
-    delta_tl_x_list = []
-    delta_br_x_list = []
-    delta_tl_y_list = []
-    delta_br_y_list = []
-    tl_scores_list = []
-    br_scores_list = []
-    tl_offs_list = []
-    br_offs_list = []
-    dense_bboxes = np.load("/mnt/truenas/scratch/li.zhu/mmdetection_sparse/mmdetection/dense_bboxes.npy")
-    dense_bboxes = torch.from_numpy(dense_bboxes)
-    
     for i, data in enumerate(data_loader):
-        if i<81:
-            """
-            with torch.no_grad():
-                dense_bbox = dense_bboxes[1000*i:1000*(i+1)]
-                #result, delta_tl_x, delta_tl_y, delta_br_x, delta_br_y, tl_scores, br_scores, tl_offs, br_offs = model(return_loss=False, rescale=True, dense_bboxes=dense_bbox, **data)
-                result = model(return_loss=False, rescale=True, **data)
-                #result, side_distance, side_confids = model(return_loss=False, rescale=True, **data)
-                #result, gt, pred, imp_iou = model(return_loss=False, rescale=True, **data)
-            '''
-            tl_scores_list.append(tl_scores.cpu())
-            br_scores_list.append(br_scores.cpu())
-            tl_offs_list.append(tl_offs.cpu())
-            br_offs_list.append(br_offs.cpu())
-            
-            if delta_tl_x is not None:
-                delta_tl_x_list.append(delta_tl_x)
-                delta_br_x_list.append(delta_br_x)
-                delta_tl_y_list.append(delta_tl_y)
-                delta_br_y_list.append(delta_br_y)
-            '''
-            '''
-            if side_distance is not None:
-                delta_tl_x_list.append(side_distance[:, 0])
-                delta_br_x_list.append(side_distance[:, 2])
-                delta_tl_y_list.append(side_distance[:, 1])
-                delta_br_y_list.append(side_distance[:, 3])
-                tl_scores_list.append(side_confids[:, 0])
-                br_scores_list.append(side_confids[:, 2])
-            '''
-            '''
-            if gt is not None:
-                gt_list.append(gt)
-                pred_list.append(pred)
-                imp_iou_list.append(imp_iou)
-            '''
-            """
-            with torch.no_grad():
-                result, dis, iou, bbox_pred, max_scores, node_feats = model(return_loss=False, rescale=True, **data)
-                np.save("max_scores_p3.npy", max_scores[0].cpu().numpy())
-                np.save("max_scores_p4.npy", max_scores[1].cpu().numpy())
-                np.save("max_scores_p5.npy", max_scores[2].cpu().numpy())
-                np.save("max_scores_p6.npy", max_scores[3].cpu().numpy())
-                np.save("max_scores_p7.npy", max_scores[4].cpu().numpy())
+        with torch.no_grad():
+            result = model(return_loss=False, rescale=True, **data)
 
-                np.save("bbox_pred_p3.npy", bbox_pred[0].cpu().numpy())
-                np.save("bbox_pred_p4.npy", bbox_pred[1].cpu().numpy())
-                np.save("bbox_pred_p5.npy", bbox_pred[2].cpu().numpy())
-                np.save("bbox_pred_p6.npy", bbox_pred[3].cpu().numpy())
-                np.save("bbox_pred_p7.npy", bbox_pred[4].cpu().numpy())
-                np.save("loc_p3.npy", dis[0].cpu().numpy())
-                np.save("loc_p4.npy", dis[1].cpu().numpy())
-                np.save("loc_p5.npy", dis[2].cpu().numpy())
-                np.save("loc_p6.npy", dis[3].cpu().numpy())
-                np.save("loc_p7.npy", dis[4].cpu().numpy())
-                np.save("iou_p3.npy", iou[0].cpu().numpy())
-                np.save("iou_p4.npy", iou[1].cpu().numpy())
-                np.save("iou_p5.npy", iou[2].cpu().numpy())
-                np.save("iou_p6.npy", iou[3].cpu().numpy())
-                np.save("iou_p7.npy", iou[4].cpu().numpy())
+        batch_size = len(result)
+        if show or out_dir:
+            if batch_size == 1 and isinstance(data['img'][0], torch.Tensor):
+                img_tensor = data['img'][0]
+            else:
+                img_tensor = data['img'][0].data[0]
+            img_metas = data['img_metas'][0].data[0]
+            imgs = tensor2imgs(img_tensor, **img_metas[0]['img_norm_cfg'])
+            assert len(imgs) == len(img_metas)
 
-                np.save("reg_feat_p3.npy", node_feats[0].cpu().numpy())
-                np.save("reg_feat_p4.npy", node_feats[1].cpu().numpy())
-                np.save("reg_feat_p5.npy", node_feats[2].cpu().numpy())
-                np.save("reg_feat_p6.npy", node_feats[3].cpu().numpy())
-                np.save("reg_feat_p7.npy", node_feats[4].cpu().numpy())
-            
-            batch_size = len(result)
-            if show or out_dir:
-                if batch_size == 1 and isinstance(data['img'][0], torch.Tensor):
-                    img_tensor = data['img'][0]
+            for i, (img, img_meta) in enumerate(zip(imgs, img_metas)):
+                h, w, _ = img_meta['img_shape']
+                img_show = img[:h, :w, :]
+
+                ori_h, ori_w = img_meta['ori_shape'][:-1]
+                img_show = mmcv.imresize(img_show, (ori_w, ori_h))
+
+                if out_dir:
+                    out_file = osp.join(out_dir, img_meta['ori_filename'])
                 else:
-                    img_tensor = data['img'][0].data[0]
-                img_metas = data['img_metas'][0].data[0]
-                imgs = tensor2imgs(img_tensor, **img_metas[0]['img_norm_cfg'])
-                assert len(imgs) == len(img_metas)
+                    out_file = None
 
-                for i, (img, img_meta) in enumerate(zip(imgs, img_metas)):
-                    h, w, _ = img_meta['img_shape']
-                    img_show = img[:h, :w, :]
+                model.module.show_result(
+                    img_show,
+                    result[i],
+                    show=show,
+                    out_file=out_file,
+                    score_thr=show_score_thr)
 
-                    ori_h, ori_w = img_meta['ori_shape'][:-1]
-                    img_show = mmcv.imresize(img_show, (ori_w, ori_h))
+        # encode mask results
+        if isinstance(result[0], tuple):
+            result = [(bbox_results, encode_mask_results(mask_results))
+                      for bbox_results, mask_results in result]
+        results.extend(result)
 
-                    if out_dir:
-                        out_file = osp.join(out_dir, img_meta['ori_filename'])
-                    else:
-                        out_file = None
-
-                    model.module.show_result(
-                        img_show,
-                        result[i],
-                        show=show,
-                        out_file=out_file,
-                        score_thr=0.3)
-
-            # encode mask results
-            if isinstance(result[0], tuple):
-                result = [(bbox_results, encode_mask_results(mask_results))
-                        for bbox_results, mask_results in result]
-            results.extend(result)
-
-            for _ in range(batch_size):
-                prog_bar.update()
-        else:
-            break
-    '''
-    gts   = torch.cat(gt_list, dim=0)
-    preds = torch.cat(pred_list, dim=0)
-    imp_ious = torch.cat(imp_iou_list, dim=0)
-    print(imp_ious.mean())
-    np.save("gts.npy", gts.cpu().numpy())
-    np.save("preds.npy", preds.cpu().numpy())
-    np.save("imp_ious.npy", imp_ious.cpu().numpy())
-    '''
-    '''
-    delta_tl_x = torch.cat(delta_tl_x_list, dim=0)
-    delta_br_x = torch.cat(delta_br_x_list, dim=0)
-    delta_tl_y = torch.cat(delta_tl_y_list, dim=0)
-    delta_br_y = torch.cat(delta_br_y_list, dim=0)
-    
-    tl_scores  = torch.stack(tl_scores_list, dim=0)
-    br_scores  = torch.stack(br_scores_list, dim=0)
-    tl_offs  = torch.stack(tl_offs_list, dim=0)
-    br_offs  = torch.stack(br_offs_list, dim=0)
-    
-    np.save("delta_tl_x.npy", delta_tl_x.cpu().numpy())
-    np.save("delta_br_x.npy", delta_br_x.cpu().numpy())
-    np.save("delta_tl_y.npy", delta_tl_y.cpu().numpy())
-    np.save("delta_br_y.npy", delta_br_y.cpu().numpy())
-
-    np.save("tl_scores.npy", tl_scores.numpy())
-    np.save("br_scores.npy", br_scores.numpy())
-    np.save("tl_offs.npy", tl_offs.numpy())
-    np.save("br_offs.npy", br_offs.numpy())
-    '''
+        for _ in range(batch_size):
+            prog_bar.update()
     return results
+    
 
 
 def multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
